@@ -5,7 +5,8 @@ from tkinter import filedialog
 def save_file(textbox):
     filename = filedialog.asksaveasfilename(initialdir="/", title="Select file",
                                                  filetypes=(("text files", "*.txt"), ("all files", "*.*")))
-    write_out(get_input(textbox), filename)
+    if filename != "":
+        write_out(get_input(textbox), filename)
 
 def open_file(textbox):
     filename = filedialog.askopenfilename(initialdir="/", title="Select file",
@@ -18,8 +19,11 @@ def write_in(filename, textbox):
     textbox.insert(INSERT, contents)
 
 def write_out(contents, fileName):
-    f = open(fileName, 'w')
-    f.write(contents)
+    try:
+        f = open(fileName, 'w')
+        f.write(contents)
+    except FileNotFoundError:
+        return
 
 def get_input(textbox):
     input = textbox.get("1.0",'end-1c')
@@ -36,7 +40,8 @@ root.title("Veditor")
 
 #stuff goes here
 text = tk.Text(root, bg="darkgrey", fg="white")
-text.grid()
+text.grid(sticky="nsew")
+
 
 #Menu code
 menubar = tk.Menu(root)
@@ -51,5 +56,7 @@ filemenu.add_command(label="Delete System32", command=root.quit)
 menubar.add_cascade(label="File", menu=filemenu)
 
 
+root.columnconfigure(0, weight=1)
+root.rowconfigure(0, weight=1)
 root.config(menu=menubar)
 root.mainloop()
