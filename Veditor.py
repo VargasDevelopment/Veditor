@@ -7,6 +7,16 @@ def save_file(textbox):
                                                  filetypes=(("text files", "*.txt"), ("all files", "*.*")))
     write_out(get_input(textbox), filename)
 
+def open_file(textbox):
+    filename = filedialog.askopenfilename(initialdir="/", title="Select file",
+                                                 filetypes=(("text files", "*.txt"), ("all files", "*.*")))
+    write_in(filename, textbox)
+
+def write_in(filename, textbox):
+    f = open(filename, 'r')
+    contents = f.read()
+    textbox.insert(INSERT, contents)
+
 def write_out(contents, fileName):
     f = open(fileName, 'w')
     f.write(contents)
@@ -32,7 +42,7 @@ text.grid()
 menubar = tk.Menu(root)
 filemenu = tk.Menu(menubar, tearoff=0)
 filemenu.add_command(label="New", command=donothing)
-filemenu.add_command(label="Open", command=donothing)
+filemenu.add_command(label="Open", command= lambda: open_file(text))
 filemenu.add_command(label="Save", command= lambda: save_file(text))
 
 filemenu.add_separator()
