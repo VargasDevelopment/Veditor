@@ -1,6 +1,7 @@
 import tkinter as tk
 from tkinter import *
 from tkinter import filedialog
+import os
 
 class Veditor(tk.Frame):
     def __init__(self, master):
@@ -22,6 +23,10 @@ class Veditor(tk.Frame):
 
         self.filemenu.add_command(label="Delete System32", command= lambda: kill(self.master))
         self.menubar.add_cascade(label="File", menu=self.filemenu)
+	
+        self.runmenu = tk.Menu(self.menubar, tearoff=0)
+        self.runmenu.add_command(label="Run script", command= lambda: run_script(self.filepath, self.pythonpath))
+        self.menubar.add_cascade(label="Run", menu=self.runmenu)
 
         master.columnconfigure(0, weight=1)
         master.rowconfigure(0, weight=1)
@@ -29,15 +34,14 @@ class Veditor(tk.Frame):
 
         #Useful Vars
         self.filepath = ""
+        #BEWARE HARDCODED PYTHONPATH
+        self.pythonpath = "D:\Python3\python.exe"
 
         def save_file(textbox):
             if len(self.filepath) > 0:
                 write_out(get_input(textbox), self.filepath)
             else:
-                filename = filedialog.asksaveasfilename(initialdir="/", title="Select file",
-                                                 filetypes=(("text files", "*.txt"), ("all files", "*.*")))
-                if filename != "":
-                    write_out(get_input(textbox), filename)
+                save_file_as(textbox)
         
         def save_file_as(textbox):
             filename = filedialog.asksaveasfilename(initialdir="/", title="Select file",
@@ -72,7 +76,9 @@ class Veditor(tk.Frame):
 
         def kill(self):
             self.destroy()
-
+        
+        def run_script(filepath, pythonpath):
+            os.system(pythonpath+" "+filepath)
 
 root = tk.Tk()
 app = Veditor(root)
