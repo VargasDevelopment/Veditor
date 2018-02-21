@@ -13,20 +13,33 @@ class Veditor(tk.Frame):
         #Menu Code
         self.menubar = tk.Menu(master)
         self.filemenu = tk.Menu(self.menubar, tearoff=0)
-        self.filemenu.add_command(label="New", command= lambda: spawn_new(master))
+        self.filemenu.add_command(label="New", command= lambda: spawn_new(self.master))
         self.filemenu.add_command(label="Open", command= lambda: open_file(self.text))
         self.filemenu.add_command(label="Save", command= lambda: save_file(self.text))
-
+        self.filemenu.add_command(label="Save as..", command= lambda: save_file_as(self.text))
+        
         self.filemenu.add_separator()
 
-        self.filemenu.add_command(label="Delete System32", command=master.quit)
+        self.filemenu.add_command(label="Delete System32", command= lambda: kill(self.master))
         self.menubar.add_cascade(label="File", menu=self.filemenu)
 
         master.columnconfigure(0, weight=1)
         master.rowconfigure(0, weight=1)
         master.config(menu=self.menubar)
 
+        #Useful Vars
+        self.filepath = ""
+
         def save_file(textbox):
+            if len(self.filepath) > 0:
+                write_out(get_input(textbox), self.filepath)
+            else:
+                filename = filedialog.asksaveasfilename(initialdir="/", title="Select file",
+                                                 filetypes=(("text files", "*.txt"), ("all files", "*.*")))
+                if filename != "":
+                    write_out(get_input(textbox), filename)
+        
+        def save_file_as(textbox):
             filename = filedialog.asksaveasfilename(initialdir="/", title="Select file",
                                                  filetypes=(("text files", "*.txt"), ("all files", "*.*")))
             if filename != "":
@@ -35,6 +48,7 @@ class Veditor(tk.Frame):
         def open_file(textbox):
             filename = filedialog.askopenfilename(initialdir="/", title="Select file",
                                                  filetypes=(("text files", "*.txt"), ("all files", "*.*")))
+            self.filepath=filename
             write_in(filename, textbox)
 
         def write_in(filename, textbox):
@@ -55,6 +69,9 @@ class Veditor(tk.Frame):
         def spawn_new(master):
             root = tk.Tk()
             new = Veditor(root)
+
+        def kill(self):
+            self.destroy()
 
 
 root = tk.Tk()
