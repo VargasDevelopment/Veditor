@@ -33,9 +33,11 @@ class Veditor(tk.Frame):
         master.config(menu=self.menubar)
 
         #Useful Vars
-        self.filepath = ""
+        self.filepath = ''
         #BEWARE HARDCODED PYTHONPATH
-        self.pythonpath = "D:\Python3\python.exe"
+        #"C:\Users\J.J. Varsity\AppData\Local\Programs\Python\Python36-32\python.exe"
+        #"D:\Python3\python.exe"
+        self.pythonpath = '"C:\\Users\\J.J. Varsity\\AppData\\Local\\Programs\\Python\\Python36-32\\python.exe"'
 
         def save_file(textbox):
             if len(self.filepath) > 0:
@@ -48,17 +50,24 @@ class Veditor(tk.Frame):
                                                  filetypes=(("text files", "*.txt"), ("all files", "*.*")))
             if filename != "":
                 write_out(get_input(textbox), filename)
+                self.master.title("Veditor - "+filename)
+                self.filepath = filename
 
         def open_file(textbox):
             filename = filedialog.askopenfilename(initialdir="/", title="Select file",
                                                  filetypes=(("text files", "*.txt"), ("all files", "*.*")))
             self.filepath=filename
-            write_in(filename, textbox)
+            if filename != "":
+                write_in(filename, textbox)
+                self.master.title("Veditor - "+filename)
 
         def write_in(filename, textbox):
-            f = open(filename, 'r')
-            contents = f.read()
-            textbox.insert(INSERT, contents)
+            try:
+                f = open(filename, 'r')
+                contents = f.read()
+                textbox.insert(INSERT, contents)
+            except FileNotFoundError:
+                return
 
         def write_out(contents, fileName):
             try:
@@ -66,6 +75,7 @@ class Veditor(tk.Frame):
                 f.write(contents)
             except FileNotFoundError:
                 return
+
         def get_input(textbox):
             input = textbox.get("1.0",'end-1c')
             return input
@@ -78,7 +88,8 @@ class Veditor(tk.Frame):
             self.destroy()
         
         def run_script(filepath, pythonpath):
-            os.system(pythonpath+" "+filepath)
+            filepath = '"'+filepath+'"'
+            os.system('"'+pythonpath+' '+filepath+'"')
 
 root = tk.Tk()
 app = Veditor(root)
