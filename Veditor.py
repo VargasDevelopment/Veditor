@@ -9,37 +9,45 @@ import re
 root = tk.Tk()
 
 
+
 class Veditor(tk.Frame):
     def __init__(self, master):
         tk.Frame.__init__(self, master)
         self.master = master
         self.master.title("Veditor")
+        self.stop = ""
+        self.toggle = True
         # text area
         self.text = tk.Text(master, bg="darkgrey", fg="white")
         self.text.grid(sticky="nsew")
         # Menu Code
         self.menubar = tk.Menu(master)
         self.filemenu = tk.Menu(self.menubar, tearoff=0)
-        self.filemenu.add_command(label="New", command=lambda: spawn_new(self.master))
-        self.filemenu.add_command(label="Open", command=lambda: open_file(self.text))
-        self.filemenu.add_command(label="Save", command=lambda: save_file(self.text))
-        self.filemenu.add_command(label="Save as..", command=lambda: save_file_as(self.text))
+        self.filemenu.add_command(label="New", command= lambda : spawn_new(self.master))
+        self.filemenu.add_command(label="Open", command= lambda : open_file(self.text))
+        self.filemenu.add_command(label="Save", command= lambda : save_file(self.text))
+        self.filemenu.add_command(label="Save as..", command= lambda : save_file_as(self.text))
 
         self.filemenu.add_separator()
 
-        self.filemenu.add_command(label="Delete System32", command=lambda: kill(self.master))
+        self.filemenu.add_command(label="Delete System32", command= lambda : kill(self.master))
         self.menubar.add_cascade(label="File", menu=self.filemenu)
 
         self.runmenu = tk.Menu(self.menubar, tearoff=0)
-        self.runmenu.add_command(label="Run script", command=lambda: run_script(self.filepath, self.pythonpath))
+        self.runmenu.add_command(label="Run script", command= lambda : run_script(self.filepath, self.pythonpath))
         self.menubar.add_cascade(label="Run", menu=self.runmenu)
+
+        self.stylemenu = tk.Menu(self.menubar, tearoff=0)
+        self.stylemenu.add_command(label="Syntax Highlighting Toggle", command= lambda : toggle_syntax(self.toggle, self.text))
+        self.menubar.add_cascade(label="Style", menu=self.stylemenu)
 
         master.columnconfigure(0, weight=1)
         master.rowconfigure(0, weight=1)
         master.config(menu=self.menubar)
+        
         self.syntax = Syntax(self.text)
-
-        self.master.after(2000, lambda: self.syntax.dew_it())
+        if self.toggle:
+            self.stop = self.master.after(2000, lambda: self.syntax.dew_it(self.toggle))
 
         # Useful Vars
         self.filepath = ''
@@ -102,6 +110,14 @@ class Veditor(tk.Frame):
             filepath = '"' + filepath + '"'
             os.system('"' + pythonpath + ' ' + filepath + '"')
 
+        def toggle_syntax(toggle, textbox):
+            self.toggle =  not toggle
+            if toggle:
+                self.stop = self.master.after(2000, lambda: self.syntax.dew_it(self.toggle))
+            else:
+                self.stop = self.master.after(2000, lambda: self.syntax.dew_it(self.toggle))
+            
+            print(self.toggle)
 
 class Syntax(tk.Text):
     def __init__(self, master):
@@ -112,10 +128,18 @@ class Syntax(tk.Text):
         self.registeredKw.extend(["False:", "True:", "else:", "try:", "return", "break"])
         #print(self.registeredKw)
 
-    def dew_it(self):
-        self.find_kw(self.master)
-        self.find_quotes(self.master)
-        self.master.after(2000, lambda: self.dew_it())
+    def dew_it(self, toggle):
+        #print("dew it"+str(toggle))
+        if toggle:
+            self.find_kw(self.master)
+            self.find_quotes(self.master)
+            self.stop = self.master.after(2000, lambda: self.dew_it(toggle))
+            self.master.tag_remove("white", "1.0","end")
+        else:
+            self.master.after_cancel(self.stop)
+            self.master.tag_add("white", "1.0", "end")
+            self.master.tag_config("white", foreground="white")
+        return
 
     def find_kw(self, textbox):
         charNum = 0
