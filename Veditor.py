@@ -108,9 +108,9 @@ class Syntax(tk.Text):
         # tk.Text.__init__(self, master)
         self.master = master
         self.registeredKw = keyword.kwlist
-        print(self.registeredKw)
-        self.registeredKw.extend(["else:", "try:", "return", "break"])
-        print(self.registeredKw)
+        #print(self.registeredKw)
+        self.registeredKw.extend(["False:", "True:", "else:", "try:", "return", "break"])
+        #print(self.registeredKw)
 
     def dew_it(self):
         self.find_kw(self.master)
