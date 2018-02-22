@@ -108,6 +108,8 @@ def syntax_highlight(textbox):
     input = textbox.get("1.0", "end")
     for c in input:
         if c == ' ':
+            if token in registeredToks:
+                tokCoords.append((str(lineNum) + "." + str(charNum - len(token)), str(lineNum) + "." + str(charNum)))
             token = ""
             charNum += 1
         elif c == '\n':
@@ -117,8 +119,6 @@ def syntax_highlight(textbox):
         else:
             token += c
             charNum += 1
-            if token in registeredToks:
-                tokCoords.append((str(lineNum)+"."+str(charNum-len(token)), str(lineNum)+"."+str(charNum)))
 
     for i in range(len(tokCoords)):
         textbox.tag_add("here", tokCoords[i][0], tokCoords[i][1])
