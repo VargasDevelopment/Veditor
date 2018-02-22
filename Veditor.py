@@ -2,6 +2,10 @@ import tkinter as tk
 from tkinter import *
 from tkinter import filedialog
 import os
+import keyword
+import re
+
+root = tk.Tk()
 
 class Veditor(tk.Frame):
     def __init__(self, master):
@@ -32,11 +36,12 @@ class Veditor(tk.Frame):
         master.rowconfigure(0, weight=1)
         master.config(menu=self.menubar)
 
+
         #Useful Vars
         self.filepath = ''
         #BEWARE HARDCODED PYTHONPATH
-        
-        self.pythonpath = "" #Your python path
+
+        self.pythonpath = '"C:\\Users\\J.J. Varsity\\AppData\\Local\\Programs\\Python\\Python36-32\\python.exe"' #Your python path
 
         def save_file(textbox):
             if len(self.filepath) > 0:
@@ -61,6 +66,8 @@ class Veditor(tk.Frame):
                 self.master.title("Veditor - "+filename)
 
         def write_in(filename, textbox):
+            # Remove text from textbox
+            textbox.delete('1.0', END)
             try:
                 f = open(filename, 'r')
                 contents = f.read()
@@ -76,7 +83,8 @@ class Veditor(tk.Frame):
                 return
 
         def get_input(textbox):
-            input = textbox.get("1.0",'end-1c')
+            # get all text in textbox
+            input = textbox.get("1.0", 'end-1c')
             return input
             
         def spawn_new(master):
@@ -90,6 +98,34 @@ class Veditor(tk.Frame):
             filepath = '"'+filepath+'"'
             os.system('"'+pythonpath+' '+filepath+'"')
 
-root = tk.Tk()
+
+def syntax_highlight(textbox):
+    charNum = 0
+    lineNum = 1
+    token = ""
+    registeredToks = keyword.kwlist
+    tokCoords = []
+    input = textbox.get("1.0", "end")
+    for c in input:
+        if c == ' ':
+            token = ""
+            charNum += 1
+        elif c == '\n':
+            lineNum += 1
+            charNum = 0
+        else:
+            token += c
+            charNum += 1
+            if token in registeredToks:
+                tokCoords.append((str(lineNum)+"."+str(charNum-len(token)), str(lineNum)+"."+str(charNum)))
+
+    for i in range(len(tokCoords)):
+        textbox.tag_add("here", tokCoords[i][0], tokCoords[i][1])
+    textbox.tag_config("here", foreground="blue")
+    print(tokCoords)
+    root.after(2000, lambda: syntax_highlight(textbox))
+
+
 app = Veditor(root)
+root.after(2000, lambda: syntax_highlight(app.text))
 root.mainloop()
