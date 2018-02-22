@@ -35,9 +35,8 @@ class Veditor(tk.Frame):
         #Useful Vars
         self.filepath = ''
         #BEWARE HARDCODED PYTHONPATH
-        #"C:\Users\J.J. Varsity\AppData\Local\Programs\Python\Python36-32\python.exe"
-        #"D:\Python3\python.exe"
-        self.pythonpath = '"C:\\Users\\J.J. Varsity\\AppData\\Local\\Programs\\Python\\Python36-32\\python.exe"'
+        
+        self.pythonpath = "" #Your python path
 
         def save_file(textbox):
             if len(self.filepath) > 0:
