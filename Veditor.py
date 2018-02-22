@@ -103,65 +103,6 @@ class Veditor(tk.Frame):
             os.system('"' + pythonpath + ' ' + filepath + '"')
 
 
-'''
-        def syntax_highlight(textbox):
-            charNum = 0
-            lineNum = 1
-            token = ""
-            q = ""
-            qCount = 0
-            tmp = ["",""]
-            registeredToks = keyword.kwlist
-            kwCoords = []
-            quoteCoords = []
-            input = textbox.get("1.0", "end")
-            for c in input:
-                if c == ' ':
-                    if token in registeredToks:
-                        kwCoords.append((str(lineNum) + "." + str(charNum - len(token)), str(lineNum) + "." + str(charNum)))
-                    token = ""
-                    charNum += 1
-                elif c == '\n':
-                    token = ""
-                    lineNum += 1
-                    charNum = 0
-                elif c == '\"':
-                    q += c
-                    qCount += 1
-                    if qCount % 2 == 0:
-                        charNum += 1
-                        tmp[1] = str(lineNum) + "." + str(charNum)
-                        if q[0] and q[len(q)-1] == "\"":
-                            quoteCoords.append(tmp)
-                            tmp = ["",""]
-                            #print(q)
-                            q = ""
-                            charNum += 1
-
-                    else:
-                        tmp[0] = str(lineNum) + "." + str(charNum)
-                    charNum += 1
-
-                else:
-                    token += c
-                    charNum += 1
-
-            for i in range(len(kwCoords)):
-                textbox.tag_add("keyword", kwCoords[i][0], kwCoords[i][1])
-            for i in range(len(quoteCoords)):
-                try:
-                    textbox.tag_add("quotes", quoteCoords[i][0], quoteCoords[i][1])
-                except TclError:
-                    print("woops")
-
-            textbox.tag_config("keyword", foreground="blue")
-            textbox.tag_config("quotes", foreground="green")
-            #print(kwCoords)
-            print(quoteCoords)
-            master.after(2000, lambda: syntax_highlight(textbox))
-'''
-
-
 class Syntax(tk.Text):
     def __init__(self, master):
         # tk.Text.__init__(self, master)
@@ -210,6 +151,7 @@ class Syntax(tk.Text):
                 # wtf (?:"[^"]*\\(?:.[^"]*\\)*.[^"]*")|(?:"[^"]*") you may ask yourself.
                 # wtf =  ((qn*b(an*b)*an*q) | (qn*q))
                 # where q = quote " , n = any non-quote [^"], b = backslash \, a = any character .
+                # Credit: https://mail.python.org/pipermail/tutor/2003-December/027063.html
 
                 iter = re.finditer(r'(?:"[^"]*\\(?:.[^"]*\\)*.[^"]*")|(?:"[^"]*")', token)
                 tmp = [(str(lineNum) + "." + str(m.start()), str(lineNum) + "." + str(m.end())) for m in iter]
