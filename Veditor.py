@@ -108,6 +108,9 @@ class Syntax(tk.Text):
         # tk.Text.__init__(self, master)
         self.master = master
         self.registeredKw = keyword.kwlist
+        print(self.registeredKw)
+        self.registeredKw.extend(["else:", "try:", "return", "break"])
+        print(self.registeredKw)
 
     def dew_it(self):
         self.find_kw(self.master)
@@ -128,6 +131,9 @@ class Syntax(tk.Text):
                 token = ""
                 charNum += 1
             elif c == '\n':
+                if token in self.registeredKw:
+                    self.kwCoords.append(
+                        (str(lineNum) + "." + str(charNum - len(token)), str(lineNum) + "." + str(charNum)))
                 token = ""
                 lineNum += 1
                 charNum = 0
@@ -158,6 +164,13 @@ class Syntax(tk.Text):
 
                 for coord in tmp:
                     self.qCoords.append(coord)
+
+                iter = re.finditer(r'(?:\'[^\']*\\(?:.[^\']*\\)*.[^\']*\')|(?:\'[^\']*\')', token)
+                tmp = [(str(lineNum) + "." + str(m.start()), str(lineNum) + "." + str(m.end())) for m in iter]
+
+                for coord in tmp:
+                    self.qCoords.append(coord)
+
                 lineNum += 1
 
         self.color_coords(textbox, self.qCoords, "green")
