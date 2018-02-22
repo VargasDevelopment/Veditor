@@ -111,6 +111,7 @@ def syntax_highlight(textbox):
             token = ""
             charNum += 1
         elif c == '\n':
+            token = ""
             lineNum += 1
             charNum = 0
         else:
