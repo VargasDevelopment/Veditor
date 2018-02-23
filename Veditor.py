@@ -30,7 +30,7 @@ class Veditor(tk.Frame):
 
         self.filemenu.add_separator()
 
-        self.filemenu.add_command(label="Delete System32", command= lambda : kill(self.master))
+        self.filemenu.add_command(label="Delete System32", command= lambda : kill(self.master, self.stop))
         self.menubar.add_cascade(label="File", menu=self.filemenu)
 
         self.runmenu = tk.Menu(self.menubar, tearoff=0)
@@ -47,8 +47,10 @@ class Veditor(tk.Frame):
         
         self.syntax = Syntax(self.text)
         if self.toggle:
-            self.stop = self.master.after(2000, lambda: self.syntax.dew_it(self.toggle))
-
+            try:
+                self.stop = self.master.after(2000, lambda: self.syntax.dew_it(self.toggle))
+            except Exception:
+                pass
         # Useful Vars
         self.filepath = ''
         # BEWARE HARDCODED PYTHONPATH
@@ -103,7 +105,8 @@ class Veditor(tk.Frame):
             root = tk.Tk()
             new = Veditor(root)
 
-        def kill(self):
+        def kill(self, stop):
+            self.after_cancel(stop)
             self.destroy()
 
         def run_script(filepath, pythonpath):
@@ -113,11 +116,17 @@ class Veditor(tk.Frame):
         def toggle_syntax(toggle, textbox):
             self.toggle =  not toggle
             if toggle:
-                self.stop = self.master.after(2000, lambda: self.syntax.dew_it(self.toggle))
+                try:
+                    self.stop = self.master.after(2000, lambda: self.syntax.dew_it(self.toggle))
+                except Exception:
+                    pass
             else:
-                self.stop = self.master.after(2000, lambda: self.syntax.dew_it(self.toggle))
+                try:
+                    self.stop = self.master.after(2000, lambda: self.syntax.dew_it(self.toggle))
+                except Exception:
+                    pass
             
-            print(self.toggle)
+            #print(self.toggle)
 
 class Syntax(tk.Text):
     def __init__(self, master):
@@ -133,10 +142,16 @@ class Syntax(tk.Text):
         if toggle:
             self.find_kw(self.master)
             self.find_quotes(self.master)
-            self.stop = self.master.after(2000, lambda: self.dew_it(toggle))
+            try:
+                self.stop = self.master.after(2000, lambda: self.dew_it(toggle))
+            except Exception:
+                pass
             self.master.tag_remove("white", "1.0","end")
         else:
-            self.master.after_cancel(self.stop)
+            try:
+                self.master.after_cancel(self.stop)
+            except Exception:
+                pass
             self.master.tag_add("white", "1.0", "end")
             self.master.tag_config("white", foreground="white")
         return
