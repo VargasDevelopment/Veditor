@@ -55,9 +55,6 @@ class Veditor(tk.Frame):
                 pass
         # Useful Vars
         self.filepath = ''
-        # BEWARE HARDCODED PYTHONPATH
-
-        #self.pythonpath = '"C:\\Users\\J.J. Varsity\\AppData\\Local\\Programs\\Python\\Python36-32\\python.exe"'  # Your python path
 
         def set_python_path(path):
             self.pythonpath = '"'+path+'"'
@@ -150,6 +147,7 @@ class Syntax(tk.Text):
             self.find_kw(self.master)
             self.find_quotes(self.master)
             self.find_comments(self.master)
+            self.find_nums(self.master)
             try:
                 self.stop = self.master.after(500, lambda: self.dew_it(toggle))
             except Exception:
@@ -246,6 +244,30 @@ class Syntax(tk.Text):
 
         self.color_coords(textbox, self.comCoords, "purple")
 
+    def find_nums(self, textbox):
+        lineNum = 1
+        token = ""
+        self.numCoords = []
+        input = textbox.get("1.0", "end")
+        next = io.StringIO(input)
+        while True:
+            token = next.readline()
+            # print(token)
+            if token == "":
+                break
+            else:
+                inline = re.finditer(r'(([0-9][0-9]*\.[0-9][0-9]*)|([0-9][0-9]*))', token)
+                tmp = [(str(lineNum) + "." + str(m.start()), str(lineNum) + "." + str(m.end())) for m in inline]
+
+                for coord in tmp:
+                    self.numCoords.append(coord)
+
+                #block = re.finditer(r'', token)
+
+                lineNum += 1
+
+        self.color_coords(textbox, self.numCoords, "red")
+
     def color_coords(self, textbox, coords, color):
         if color == "blue":
             for i in range(len(coords)):
@@ -259,6 +281,10 @@ class Syntax(tk.Text):
             for i in range(len(coords)):
                 textbox.tag_add("comment", self.comCoords[i][0], self.comCoords[i][1])
             textbox.tag_config("comment", foreground="purple")
+        if color == "red":
+            for i in range(len(coords)):
+                textbox.tag_add("number", self.numCoords[i][0], self.numCoords[i][1])
+            textbox.tag_config("number", foreground="red")
 
 
 
