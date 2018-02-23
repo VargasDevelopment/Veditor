@@ -266,7 +266,7 @@ class Syntax(tk.Text):
 
                 lineNum += 1
 
-        self.color_coords(textbox, self.numCoords, "red")
+        self.color_coords(textbox, self.numCoords, "black")
 
     def color_coords(self, textbox, coords, color):
         if color == "blue":
@@ -281,10 +281,10 @@ class Syntax(tk.Text):
             for i in range(len(coords)):
                 textbox.tag_add("comment", self.comCoords[i][0], self.comCoords[i][1])
             textbox.tag_config("comment", foreground="purple")
-        if color == "red":
+        if color == "black":
             for i in range(len(coords)):
                 textbox.tag_add("number", self.numCoords[i][0], self.numCoords[i][1])
-            textbox.tag_config("number", foreground="red")
+            textbox.tag_config("number", foreground="black")
 
 
 
