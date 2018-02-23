@@ -48,7 +48,7 @@ class Veditor(tk.Frame):
         self.syntax = Syntax(self.text)
         if self.toggle:
             try:
-                self.stop = self.master.after(2000, lambda: self.syntax.dew_it(self.toggle))
+                self.stop = self.master.after(500, lambda: self.syntax.dew_it(self.toggle))
             except Exception:
                 pass
         # Useful Vars
@@ -116,7 +116,7 @@ class Veditor(tk.Frame):
         def toggle_syntax(toggle, textbox):
             self.toggle = not toggle
             try:
-                self.stop = self.master.after(2000, lambda: self.syntax.dew_it(self.toggle))
+                self.stop = self.master.after(500, lambda: self.syntax.dew_it(self.toggle))
             except Exception:
                 pass
             
@@ -138,7 +138,7 @@ class Syntax(tk.Text):
             self.find_quotes(self.master)
             self.find_comments(self.master)
             try:
-                self.stop = self.master.after(2000, lambda: self.dew_it(toggle))
+                self.stop = self.master.after(500, lambda: self.dew_it(toggle))
             except Exception:
                 pass
             self.master.tag_remove("white", "1.0","end")
