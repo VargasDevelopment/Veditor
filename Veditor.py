@@ -16,6 +16,7 @@ class Veditor(tk.Frame):
         self.master = master
         self.master.title("Veditor")
         self.stop = ""
+        self.pythonpath = ""
         self.toggle = True
         # text area
         self.text = tk.Text(master, bg="darkgrey", fg="white")
@@ -34,6 +35,7 @@ class Veditor(tk.Frame):
         self.menubar.add_cascade(label="File", menu=self.filemenu)
 
         self.runmenu = tk.Menu(self.menubar, tearoff=0)
+        self.runmenu.add_command(label="Set python path", command=lambda: set_python_path(select_file(True)))
         self.runmenu.add_command(label="Run script", command= lambda : run_script(self.filepath, self.pythonpath))
         self.menubar.add_cascade(label="Run", menu=self.runmenu)
 
@@ -55,7 +57,10 @@ class Veditor(tk.Frame):
         self.filepath = ''
         # BEWARE HARDCODED PYTHONPATH
 
-        self.pythonpath = '"C:\\Users\\J.J. Varsity\\AppData\\Local\\Programs\\Python\\Python36-32\\python.exe"'  # Your python path
+        #self.pythonpath = '"C:\\Users\\J.J. Varsity\\AppData\\Local\\Programs\\Python\\Python36-32\\python.exe"'  # Your python path
+
+        def set_python_path(path):
+            self.pythonpath = '"'+path+'"'
 
         def save_file(textbox):
             if len(self.filepath) > 0:
@@ -71,9 +76,17 @@ class Veditor(tk.Frame):
                 self.master.title("Veditor - " + filename)
                 self.filepath = filename
 
+        def select_file(pathType):
+            if pathType:
+                return filedialog.askopenfilename(initialdir="/", title="Select Python Path",
+                                       filetypes=(("all files", "*.*"), ("text files", "*.txt")))
+            else:
+                return filedialog.askopenfilename(initialdir="/", title="Select File",
+                                       filetypes=(("all files", "*.*"), ("text files", "*.txt")))
+
         def open_file(textbox):
-            filename = filedialog.askopenfilename(initialdir="/", title="Select file",
-                                                  filetypes=(("text files", "*.txt"), ("all files", "*.*")))
+            filename = select_file(False)
+
             self.filepath = filename
             if filename != "":
                 write_in(filename, textbox)
@@ -158,7 +171,7 @@ class Syntax(tk.Text):
         self.kwCoords = []
         input = textbox.get("1.0", "end")
         for c in input:
-            if c == ' ':
+            if c == ' ' or c == '\t':
                 if token in self.registeredKw:
                     self.kwCoords.append(
                         (str(lineNum) + "." + str(charNum - len(token)), str(lineNum) + "." + str(charNum)))
