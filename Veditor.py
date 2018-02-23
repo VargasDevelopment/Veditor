@@ -114,17 +114,11 @@ class Veditor(tk.Frame):
             os.system('"' + pythonpath + ' ' + filepath + '"')
 
         def toggle_syntax(toggle, textbox):
-            self.toggle =  not toggle
-            if toggle:
-                try:
-                    self.stop = self.master.after(2000, lambda: self.syntax.dew_it(self.toggle))
-                except Exception:
-                    pass
-            else:
-                try:
-                    self.stop = self.master.after(2000, lambda: self.syntax.dew_it(self.toggle))
-                except Exception:
-                    pass
+            self.toggle = not toggle
+            try:
+                self.stop = self.master.after(2000, lambda: self.syntax.dew_it(self.toggle))
+            except Exception:
+                pass
             
             #print(self.toggle)
 
@@ -142,6 +136,7 @@ class Syntax(tk.Text):
         if toggle:
             self.find_kw(self.master)
             self.find_quotes(self.master)
+            self.find_comments(self.master)
             try:
                 self.stop = self.master.after(2000, lambda: self.dew_it(toggle))
             except Exception:
@@ -214,15 +209,44 @@ class Syntax(tk.Text):
 
         self.color_coords(textbox, self.qCoords, "green")
 
+    def find_comments(self, textbox):
+        lineNum = 1
+        token = ""
+        self.comCoords = []
+        input = textbox.get("1.0", "end")
+        next = io.StringIO(input)
+        while True:
+            token = next.readline()
+            # print(token)
+            if token == "":
+                break
+            else:
+                inline = re.finditer(r'#.*', token)
+                tmp = [(str(lineNum) + "." + str(m.start()), str(lineNum) + "." + str(m.end())) for m in inline]
+
+                for coord in tmp:
+                    self.comCoords.append(coord)
+
+                #block = re.finditer(r'', token)
+
+                lineNum += 1
+
+        self.color_coords(textbox, self.comCoords, "purple")
+
     def color_coords(self, textbox, coords, color):
         if color == "blue":
             for i in range(len(coords)):
                 textbox.tag_add("keyword", self.kwCoords[i][0], self.kwCoords[i][1])
+            textbox.tag_config("keyword", foreground="blue")
         if color == "green":
             for i in range(len(coords)):
                 textbox.tag_add("quote", self.qCoords[i][0], self.qCoords[i][1])
-        textbox.tag_config("keyword", foreground="blue")
-        textbox.tag_config("quote", foreground="green")
+            textbox.tag_config("quote", foreground="green")
+        if color == "purple":
+            for i in range(len(coords)):
+                textbox.tag_add("comment", self.comCoords[i][0], self.comCoords[i][1])
+            textbox.tag_config("comment", foreground="purple")
+
 
 
 app = Veditor(root)
