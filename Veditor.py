@@ -74,6 +74,7 @@ class Veditor(tk.Frame):
                 self.filepath = filename
 
         def select_file(pathType):
+            Tk().withdraw()
             if pathType:
                 return filedialog.askopenfilename(initialdir="/", title="Select Python Path",
                                        filetypes=(("all files", "*.*"), ("text files", "*.txt")))
