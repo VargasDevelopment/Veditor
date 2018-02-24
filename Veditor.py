@@ -140,8 +140,35 @@ class Syntax(tk.Text):
         self.registeredKw = keyword.kwlist
         #print(self.registeredKw)
         self.registeredKw.extend(["False:", "True:", "else:", "try:", "return", "break"])
-        #print(self.registeredKw)
+        #print(self.registeredKw
+        self.indentLevel = [0]
 
+        self.master.bind("<Return>", self.auto_indent)
+        self.master.bind("<Tab>", self.tab)
+        self.master.bind("<BackSpace>", self.back)
+
+    def tab(self, arg):
+        self.master.insert(INSERT, " " * 4)
+        return "break"
+    
+    def back(self, arg):
+        startLine = str(self.master.index("insert linestart"))
+        endLine = str(self.master.index("insert lineend"))
+        actualPos = str(self.master.index("insert"))
+        #print("actual pos "+actualPos)
+        input = self.master.get(startLine, endLine).strip()
+        if self.master.tag_ranges("sel"):
+            self.master.delete(SEL_FIRST,SEL_LAST)
+        elif input == "" and actualPos[len(actualPos)-1] != "0":
+            self.master.delete("insert -4 chars", "insert")
+            if self.indentLevel[int(startLine[0])-1] > 1:
+                self.indentLevel[int(startLine[0])-1] -= 1
+            else:
+                self.indentLevel[int(startLine[0])-1] = 0
+        else:
+            self.master.delete("insert -1 chars", "insert")
+        return "break"
+    
     def dew_it(self, toggle):
         #print("dew it"+str(toggle))
         if toggle:
@@ -149,6 +176,7 @@ class Syntax(tk.Text):
             self.find_quotes(self.master)
             self.find_comments(self.master)
             self.find_nums(self.master)
+            #self.auto_indent(self.master)
             try:
                 self.stop = self.master.after(500, lambda: self.dew_it(toggle))
             except Exception:
@@ -268,6 +296,49 @@ class Syntax(tk.Text):
                 lineNum += 1
 
         self.color_coords(textbox, self.numCoords, "black")
+
+    def auto_indent(self, arg):
+        startLine = str(self.master.index("insert linestart"))
+        endLine = str(self.master.index("insert lineend"))
+        input = self.master.get(startLine, endLine)
+        allInput = self.master.get("1.0", "end").splitlines()
+        self.indentLevel = self.indentLevel[:len(allInput)]
+
+        try:
+            indentFill = self.indentLevel[int(startLine[0])-1]
+        except IndexError:
+            indentFill = 0
+        if indentFill > 0:
+            try:
+                self.indentLevel[int(startLine[0])] = self.indentLevel[int(startLine[0])-1]
+            except IndexError:
+                if len(self.indentLevel) >= 1:
+                    self.indentLevel.append(self.indentLevel[int(startLine[0])-1])
+                else:
+                    self.indentLevel.append(0)
+             
+        self.master.insert(INSERT, "\n")
+        
+        if re.search(r'.+\:', input):
+            try:
+                self.indentLevel[int(startLine[0])] += 1
+            except IndexError:
+                self.indentLevel.append(1)
+            self.master.insert(INSERT, " " * (4 * self.indentLevel[int(startLine[0])]))
+            for i in range(int(startLine[0]),len(self.indentLevel)-1):
+                try: 
+                    self.indentLevel[i+1] = self.indentLevel[i]
+                except IndexError:
+                    pass
+            return "break"
+
+        try:
+            self.master.insert(INSERT, " " * (4 * self.indentLevel[int(startLine[0])-1]))
+            self.indentLevel.append(self.indentLevel[int(startLine[0])-1])
+        except IndexError:
+            self.indentLevel.append(0)
+        return "break"
+                    
 
     def color_coords(self, textbox, coords, color):
         if color == "blue":
