@@ -129,7 +129,7 @@ class Veditor(tk.Frame):
 
         def run_script(filepath, pythonpath):
             #filepath = '"' + filepath + '"'
-            status = subprocess.Popen([self.pythonpath, self.filepath], shell=True)
+            status = subprocess.Popen([self.pythonpath, self.filepath])
             #os.system('"' + pythonpath + ' ' + filepath + '"')
 
         def toggle_syntax(toggle, textbox):
@@ -351,13 +351,14 @@ class Syntax(tk.Text):
             try:
                 self.indentLevel[int(startLine[:pIndex])] = self.indentLevel[int(startLine[:pIndex])-1]+1
             except IndexError:
-                self.indentLevel.append(self.indentLevel[int(startLine[:pIndex])-1])
+                self.indentLevel.append(self.indentLevel[int(startLine[:pIndex])-1] + 1)
             self.master.insert(INSERT, " " * (4 * self.indentLevel[int(startLine[:pIndex])]))
             #for i in range(int(startLine[:pIndex]),len(self.indentLevel)-1):
-            #    try: 
+            #    try:
             #        self.indentLevel[i+1] = self.indentLevel[i]
             #    except IndexError:
             #        pass
+            print(self.indentLevel)
             return "break"
 
         try:
