@@ -1,7 +1,9 @@
 import tkinter as tk
 from tkinter import *
 from tkinter import filedialog
-import os
+import os.path
+import sys
+import subprocess
 import keyword
 import io
 import re
@@ -14,6 +16,7 @@ class Veditor(tk.Frame):
     def __init__(self, master):
         tk.Frame.__init__(self, master)
         self.master = master
+        self.master.protocol("WM_DELETE_WINDOW", lambda : kill(self.master, self.stop))
         self.master.title("Veditor")
         self.stop = ""
         self.pythonpath = ""
@@ -57,7 +60,9 @@ class Veditor(tk.Frame):
         self.filepath = ''
 
         def set_python_path(path):
-            self.pythonpath = '"'+path+'"'
+            self.pythonpath = os.path.abspath(path)
+            #print(self.pythonpath)
+            #self.pythonpath = '"'+path+'"'
 
         def save_file(textbox):
             if len(self.filepath) > 0:
@@ -84,8 +89,8 @@ class Veditor(tk.Frame):
 
         def open_file(textbox):
             filename = select_file(False)
-
-            self.filepath = filename
+            
+            self.filepath = os.path.abspath(filename)
             if filename != "":
                 write_in(filename, textbox)
                 self.master.title("Veditor - " + filename)
@@ -97,8 +102,10 @@ class Veditor(tk.Frame):
                 f = open(filename, 'r')
                 contents = f.read()
                 textbox.insert(INSERT, contents)
+                self.syntax.indent_open(textbox)
             except FileNotFoundError:
                 return
+            
 
         def write_out(contents, fileName):
             try:
@@ -121,8 +128,9 @@ class Veditor(tk.Frame):
             self.destroy()
 
         def run_script(filepath, pythonpath):
-            filepath = '"' + filepath + '"'
-            os.system('"' + pythonpath + ' ' + filepath + '"')
+            #filepath = '"' + filepath + '"'
+            status = subprocess.Popen([self.pythonpath, self.filepath], shell=True)
+            #os.system('"' + pythonpath + ' ' + filepath + '"')
 
         def toggle_syntax(toggle, textbox):
             self.toggle = not toggle
@@ -148,18 +156,32 @@ class Syntax(tk.Text):
         self.master.bind("<BackSpace>", self.back)
 
     def tab(self, arg):
+        startLine = str(self.master.index("insert linestart"))
+        endLine = str(self.master.index("insert lineend"))
+        input = self.master.get(startLine, endLine).strip()
+        if input == "":
+           self.indentLevel[int(startLine[0])-1] +=1
         self.master.insert(INSERT, " " * 4)
         return "break"
     
     def back(self, arg):
+        pIndex = 0
         startLine = str(self.master.index("insert linestart"))
         endLine = str(self.master.index("insert lineend"))
         actualPos = str(self.master.index("insert"))
+        for c in actualPos:
+            if c == ".":
+                pIndex += 1
+                break
+            else:
+                pIndex += 1
         #print("actual pos "+actualPos)
         input = self.master.get(startLine, endLine).strip()
+        colZero = re.search(r'([0-9]*\.0) |([0-9][0-9]*\.0)', actualPos)
+
         if self.master.tag_ranges("sel"):
             self.master.delete(SEL_FIRST,SEL_LAST)
-        elif input == "" and actualPos[len(actualPos)-1] != "0":
+        elif input == "" and not colZero and int(actualPos[pIndex:]) % 4 == 0:
             self.master.delete("insert -4 chars", "insert")
             if self.indentLevel[int(startLine[0])-1] > 1:
                 self.indentLevel[int(startLine[0])-1] -= 1
@@ -303,17 +325,23 @@ class Syntax(tk.Text):
         input = self.master.get(startLine, endLine)
         allInput = self.master.get("1.0", "end").splitlines()
         self.indentLevel = self.indentLevel[:len(allInput)]
-
+        pIndex = 0
+        for c in startLine:
+            if c == ".":
+                break
+            else:
+                pIndex += 1
+        
         try:
-            indentFill = self.indentLevel[int(startLine[0])-1]
+            indentFill = self.indentLevel[int(startLine[:pIndex])-1]
         except IndexError:
             indentFill = 0
         if indentFill > 0:
             try:
-                self.indentLevel[int(startLine[0])] = self.indentLevel[int(startLine[0])-1]
+                self.indentLevel[int(startLine[:pIndex])] = self.indentLevel[int(startLine[:pIndex])-1]
             except IndexError:
                 if len(self.indentLevel) >= 1:
-                    self.indentLevel.append(self.indentLevel[int(startLine[0])-1])
+                    self.indentLevel.append(self.indentLevel[int(startLine[:pIndex])-1])
                 else:
                     self.indentLevel.append(0)
              
@@ -321,24 +349,41 @@ class Syntax(tk.Text):
         
         if re.search(r'.+\:', input):
             try:
-                self.indentLevel[int(startLine[0])] += 1
+                self.indentLevel[int(startLine[:pIndex])] = self.indentLevel[int(startLine[:pIndex])-1]+1
             except IndexError:
-                self.indentLevel.append(1)
-            self.master.insert(INSERT, " " * (4 * self.indentLevel[int(startLine[0])]))
-            for i in range(int(startLine[0]),len(self.indentLevel)-1):
-                try: 
-                    self.indentLevel[i+1] = self.indentLevel[i]
-                except IndexError:
-                    pass
+                self.indentLevel.append(self.indentLevel[int(startLine[:pIndex])-1])
+            self.master.insert(INSERT, " " * (4 * self.indentLevel[int(startLine[:pIndex])]))
+            #for i in range(int(startLine[:pIndex]),len(self.indentLevel)-1):
+            #    try: 
+            #        self.indentLevel[i+1] = self.indentLevel[i]
+            #    except IndexError:
+            #        pass
             return "break"
 
         try:
-            self.master.insert(INSERT, " " * (4 * self.indentLevel[int(startLine[0])-1]))
-            self.indentLevel.append(self.indentLevel[int(startLine[0])-1])
+            self.master.insert(INSERT, " " * (4 * self.indentLevel[int(startLine[:pIndex])-1]))
+            self.indentLevel[int(startLine[:pIndex])] = self.indentLevel[int(startLine[:pIndex])-1]
         except IndexError:
-            self.indentLevel.append(0)
+            self.indentLevel.append(self.indentLevel[int(startLine[:pIndex])-1])
+            #self.indentLevel.append(0)
         return "break"
-                    
+
+    def indent_open(self, textbox):
+        input = textbox.get("1.0", "end").splitlines()
+        #print(input[:13])
+        for i in range(len(input)):
+            spaceCount = 0
+            for c in input[i]:
+                if c == " ":
+                    spaceCount += 1
+                else:
+                     try:
+                         self.indentLevel[i] = int(spaceCount / 4)
+                     except IndexError:
+                         self.indentLevel.append(int(spaceCount / 4))
+                     break
+            self.indentLevel.append(0)
+        #print(self.indentLevel)
 
     def color_coords(self, textbox, coords, color):
         if color == "blue":
