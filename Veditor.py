@@ -16,7 +16,6 @@ class Veditor(tk.Frame):
     def __init__(self, master):
         tk.Frame.__init__(self, master)
         self.master = master
-        self.master.protocol("WM_DELETE_WINDOW", lambda : kill(self.master, self.stop))
         self.master.title("Veditor")
         self.stop = ""
         self.pythonpath = ""
@@ -71,7 +70,7 @@ class Veditor(tk.Frame):
                 save_file_as(textbox)
 
         def save_file_as(textbox):
-            filename = filedialog.asksaveasfilename(initialdir="/", title="Select file",
+            filename = filedialog.asksaveasfilename(initialdir="/", title="Save as..",
                                                     filetypes=(("text files", "*.txt"), ("all files", "*.*")))
             if filename != "":
                 write_out(get_input(textbox), filename)
@@ -79,13 +78,17 @@ class Veditor(tk.Frame):
                 self.filepath = filename
 
         def select_file(pathType):
-            Tk().withdraw()
+            newRoot = Tk()
+            newRoot.withdraw()
             if pathType:
-                return filedialog.askopenfilename(initialdir="/", title="Select Python Path",
+                filename =filedialog.askopenfilename(initialdir="/", title="Select Python Path",
                                        filetypes=(("all files", "*.*"), ("text files", "*.txt")))
             else:
-                return filedialog.askopenfilename(initialdir="/", title="Select File",
+                filename = filedialog.askopenfilename(initialdir="/", title="Select File",
                                        filetypes=(("all files", "*.*"), ("text files", "*.txt")))
+            newRoot.destroy()
+            return filename
+                
 
         def open_file(textbox):
             filename = select_file(False)
@@ -358,7 +361,7 @@ class Syntax(tk.Text):
             #        self.indentLevel[i+1] = self.indentLevel[i]
             #    except IndexError:
             #        pass
-            print(self.indentLevel)
+            #print(self.indentLevel)
             return "break"
 
         try:
