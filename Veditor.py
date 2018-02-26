@@ -49,9 +49,12 @@ class Veditor(tk.Frame):
         master.rowconfigure(0, weight=1)
         master.config(menu=self.menubar)
         
+        #initialize Syntax object
         self.syntax = Syntax(self.text)
+        
         if self.toggle:
             try:
+                #If syntax toggled on, apply syntax rules
                 self.stop = self.master.after(500, lambda: self.syntax.dew_it(self.toggle))
             except Exception:
                 pass
@@ -60,8 +63,6 @@ class Veditor(tk.Frame):
 
         def set_python_path(path):
             self.pythonpath = os.path.abspath(path)
-            #print(self.pythonpath)
-            #self.pythonpath = '"'+path+'"'
 
         def save_file(textbox):
             if len(self.filepath) > 0:
@@ -78,6 +79,7 @@ class Veditor(tk.Frame):
                 self.filepath = filename
 
         def select_file(pathType):
+            # Spawn new root for file dialogue, suppress it visually
             newRoot = Tk()
             newRoot.withdraw()
             if pathType:
@@ -86,6 +88,7 @@ class Veditor(tk.Frame):
             else:
                 filename = filedialog.askopenfilename(initialdir="/", title="Select File",
                                        filetypes=(("all files", "*.*"), ("text files", "*.txt")))
+            # Delete new root window to avoid memory leak, return file name
             newRoot.destroy()
             return filename
                 
@@ -102,6 +105,7 @@ class Veditor(tk.Frame):
             # Remove text from textbox
             textbox.delete('1.0', END)
             try:
+                # Write in text from file, handle exceptions
                 f = open(filename, 'r')
                 contents = f.read()
                 textbox.insert(INSERT, contents)
@@ -112,28 +116,31 @@ class Veditor(tk.Frame):
 
         def write_out(contents, fileName):
             try:
+                # Write editor contents directly to file, handle exceptions
                 f = open(fileName, 'w')
                 f.write(contents)
             except FileNotFoundError:
                 return
 
         def get_input(textbox):
-            # get all text in textbox
+            # get all text in textbox - last charcter
             input = textbox.get("1.0", 'end-1c')
             return input
 
         def spawn_new(master):
+            # generate new veditor instance
             root = tk.Tk()
             new = Veditor(root)
 
         def kill(self, stop):
+            # stop scheduled jobs, kill tkinter window/process
             self.after_cancel(stop)
             self.destroy()
 
         def run_script(filepath, pythonpath):
-            #filepath = '"' + filepath + '"'
+            # run current open file against user-set python path (if any)
+            # Will fail if no python path is set 
             status = subprocess.Popen([self.pythonpath, self.filepath])
-            #os.system('"' + pythonpath + ' ' + filepath + '"')
 
         def toggle_syntax(toggle, textbox):
             self.toggle = not toggle
@@ -142,16 +149,14 @@ class Veditor(tk.Frame):
             except Exception:
                 pass
             
-            #print(self.toggle)
 
+
+# The syntax class handles syntax highlighting and auto-indentation        
 class Syntax(tk.Text):
     def __init__(self, master):
-        # tk.Text.__init__(self, master)
         self.master = master
         self.registeredKw = keyword.kwlist
-        #print(self.registeredKw)
         self.registeredKw.extend(["False:", "True:", "else:", "try:", "return", "break"])
-        #print(self.registeredKw
         self.indentLevel = [0]
 
         self.master.bind("<Return>", self.auto_indent)
@@ -178,7 +183,7 @@ class Syntax(tk.Text):
                 break
             else:
                 pIndex += 1
-        #print("actual pos "+actualPos)
+
         input = self.master.get(startLine, endLine).strip()
         colZero = re.search(r'([0-9]*\.0) |([0-9][0-9]*\.0)', actualPos)
 
@@ -195,13 +200,11 @@ class Syntax(tk.Text):
         return "break"
     
     def dew_it(self, toggle):
-        #print("dew it"+str(toggle))
         if toggle:
             self.find_kw(self.master)
             self.find_quotes(self.master)
             self.find_comments(self.master)
             self.find_nums(self.master)
-            #self.auto_indent(self.master)
             try:
                 self.stop = self.master.after(500, lambda: self.dew_it(toggle))
             except Exception:
@@ -249,11 +252,10 @@ class Syntax(tk.Text):
         next = io.StringIO(input)
         while True:
             token = next.readline()
-            # print(token)
             if token == "":
                 break
             else:
-                # wtf (?:"[^"]*\\(?:.[^"]*\\)*.[^"]*")|(?:"[^"]*") you may ask yourself.
+                # wtf is even (?:"[^"]*\\(?:.[^"]*\\)*.[^"]*")|(?:"[^"]*") you may ask yourself.
                 # wtf =  ((qn*b(an*b)*an*q) | (qn*q))
                 # where q = quote " , n = any non-quote [^"], b = backslash \, a = any character .
                 # Credit: https://mail.python.org/pipermail/tutor/2003-December/027063.html
@@ -282,7 +284,6 @@ class Syntax(tk.Text):
         next = io.StringIO(input)
         while True:
             token = next.readline()
-            # print(token)
             if token == "":
                 break
             else:
@@ -291,8 +292,6 @@ class Syntax(tk.Text):
 
                 for coord in tmp:
                     self.comCoords.append(coord)
-
-                #block = re.finditer(r'', token)
 
                 lineNum += 1
 
@@ -306,7 +305,6 @@ class Syntax(tk.Text):
         next = io.StringIO(input)
         while True:
             token = next.readline()
-            # print(token)
             if token == "":
                 break
             else:
@@ -315,8 +313,6 @@ class Syntax(tk.Text):
 
                 for coord in tmp:
                     self.numCoords.append(coord)
-
-                #block = re.finditer(r'', token)
 
                 lineNum += 1
 
@@ -335,11 +331,11 @@ class Syntax(tk.Text):
             else:
                 pIndex += 1
         
-        try:
-            indentFill = self.indentLevel[int(startLine[:pIndex])-1]
+        try:        
+            currentLevel = self.indentLevel[int(startLine[:pIndex])-1]
         except IndexError:
-            indentFill = 0
-        if indentFill > 0:
+            currentLevel = 0
+        if currentLevel > 0:
             try:
                 self.indentLevel[int(startLine[:pIndex])] = self.indentLevel[int(startLine[:pIndex])-1]
             except IndexError:
@@ -356,12 +352,6 @@ class Syntax(tk.Text):
             except IndexError:
                 self.indentLevel.append(self.indentLevel[int(startLine[:pIndex])-1] + 1)
             self.master.insert(INSERT, " " * (4 * self.indentLevel[int(startLine[:pIndex])]))
-            #for i in range(int(startLine[:pIndex]),len(self.indentLevel)-1):
-            #    try:
-            #        self.indentLevel[i+1] = self.indentLevel[i]
-            #    except IndexError:
-            #        pass
-            #print(self.indentLevel)
             return "break"
 
         try:
@@ -369,25 +359,23 @@ class Syntax(tk.Text):
             self.indentLevel[int(startLine[:pIndex])] = self.indentLevel[int(startLine[:pIndex])-1]
         except IndexError:
             self.indentLevel.append(self.indentLevel[int(startLine[:pIndex])-1])
-            #self.indentLevel.append(0)
         return "break"
 
     def indent_open(self, textbox):
         input = textbox.get("1.0", "end").splitlines()
-        #print(input[:13])
         for i in range(len(input)):
             spaceCount = 0
             for c in input[i]:
                 if c == " ":
                     spaceCount += 1
                 else:
-                     try:
-                         self.indentLevel[i] = int(spaceCount / 4)
-                     except IndexError:
-                         self.indentLevel.append(int(spaceCount / 4))
-                     break
+                    try:
+                        self.indentLevel[i] = int(spaceCount / 4)
+                    except IndexError:
+                        self.indentLevel.append(int(spaceCount / 4))
+                    break
             self.indentLevel.append(0)
-        #print(self.indentLevel)
+        print(self.indentLevel)
 
     def color_coords(self, textbox, coords, color):
         if color == "blue":
@@ -410,5 +398,4 @@ class Syntax(tk.Text):
 
 
 app = Veditor(root)
-# root.after(2000, lambda: syntax_highlight(app.text))
 root.mainloop()
