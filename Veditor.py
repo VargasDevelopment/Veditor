@@ -348,18 +348,18 @@ class Syntax(tk.Text):
         
         if re.search(r'.+\:', input):
             try:
-                self.indentLevel[int(startLine[:pIndex])] = self.indentLevel[int(startLine[:pIndex])-1]+1
+                self.indentLevel.insert(int(startLine[:pIndex]),self.indentLevel[int(startLine[:pIndex])-1]+1)
             except IndexError:
                 self.indentLevel.append(self.indentLevel[int(startLine[:pIndex])-1] + 1)
             self.master.insert(INSERT, " " * (4 * self.indentLevel[int(startLine[:pIndex])]))
             return "break"
-
-        try:
-            self.master.insert(INSERT, " " * (4 * self.indentLevel[int(startLine[:pIndex])-1]))
-            self.indentLevel[int(startLine[:pIndex])] = self.indentLevel[int(startLine[:pIndex])-1]
-        except IndexError:
-            self.indentLevel.append(self.indentLevel[int(startLine[:pIndex])-1])
-        return "break"
+        else:
+            try:
+                self.master.insert(INSERT, " " * (4 * self.indentLevel[int(startLine[:pIndex])-1]))
+                self.indentLevel.insert(int(startLine[:pIndex]),self.indentLevel[int(startLine[:pIndex])-1])
+            except IndexError:
+                self.indentLevel.append(self.indentLevel[int(startLine[:pIndex])-1])
+            return "break"
 
     def indent_open(self, textbox):
         input = textbox.get("1.0", "end").splitlines()
@@ -375,7 +375,7 @@ class Syntax(tk.Text):
                         self.indentLevel.append(int(spaceCount / 4))
                     break
             self.indentLevel.append(0)
-        print(self.indentLevel)
+        #print(self.indentLevel)
 
     def color_coords(self, textbox, coords, color):
         if color == "blue":
