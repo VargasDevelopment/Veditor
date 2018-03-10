@@ -157,18 +157,13 @@ class Syntax(tk.Text):
         self.master = master
         self.registeredKw = keyword.kwlist
         self.registeredKw.extend(["False:", "True:", "else:", "try:", "return", "break"])
-        self.indentLevel = [0]
+        #self.indentLevel = [0]
 
         self.master.bind("<Return>", self.auto_indent)
         self.master.bind("<Tab>", self.tab)
         self.master.bind("<BackSpace>", self.back)
 
     def tab(self, arg):
-        startLine = str(self.master.index("insert linestart"))
-        endLine = str(self.master.index("insert lineend"))
-        input = self.master.get(startLine, endLine).strip()
-        if input == "":
-           self.indentLevel[int(startLine[0])-1] +=1
         self.master.insert(INSERT, " " * 4)
         return "break"
     
@@ -184,21 +179,17 @@ class Syntax(tk.Text):
             else:
                 pIndex += 1
 
-        input = self.master.get(startLine, endLine).strip()
+        input = self.master.get(startLine, actualPos).strip()
         colZero = re.search(r'([0-9]*\.0) |([0-9][0-9]*\.0)', actualPos)
 
         if self.master.tag_ranges("sel"):
             self.master.delete(SEL_FIRST,SEL_LAST)
         elif input == "" and not colZero and int(actualPos[pIndex:]) % 4 == 0:
             self.master.delete("insert -4 chars", "insert")
-            if self.indentLevel[int(startLine[0])-1] > 1:
-                self.indentLevel[int(startLine[0])-1] -= 1
-            else:
-                self.indentLevel[int(startLine[0])-1] = 0
         else:
             self.master.delete("insert -1 chars", "insert")
         return "break"
-    
+    # This function runs the syntax highlighting
     def dew_it(self, toggle):
         if toggle:
             self.find_kw(self.master)
@@ -218,7 +209,8 @@ class Syntax(tk.Text):
             self.master.tag_add("white", "1.0", "end")
             self.master.tag_config("white", foreground="white")
         return
-
+    # This function finds keywords for syntax highlighting.
+    # NOTE: Re-do this with regex
     def find_kw(self, textbox):
         charNum = 0
         lineNum = 1
@@ -243,7 +235,8 @@ class Syntax(tk.Text):
                 token += c
                 charNum += 1
         self.color_coords(textbox, self.kwCoords, "blue")
-
+    
+    #This function finds quotes for syntax highlighting
     def find_quotes(self, textbox):
         lineNum = 1
         token = ""
@@ -275,7 +268,8 @@ class Syntax(tk.Text):
                 lineNum += 1
 
         self.color_coords(textbox, self.qCoords, "green")
-
+    
+    # This function finds line comments for highlighting
     def find_comments(self, textbox):
         lineNum = 1
         token = ""
@@ -296,7 +290,8 @@ class Syntax(tk.Text):
                 lineNum += 1
 
         self.color_coords(textbox, self.comCoords, "purple")
-
+    
+    # This  function finds numbers for highlighting
     def find_nums(self, textbox):
         lineNum = 1
         token = ""
@@ -317,50 +312,38 @@ class Syntax(tk.Text):
                 lineNum += 1
 
         self.color_coords(textbox, self.numCoords, "black")
-
+    
+    # This function implements auto-indentation
     def auto_indent(self, arg):
         startLine = str(self.master.index("insert linestart"))
         endLine = str(self.master.index("insert lineend"))
         input = self.master.get(startLine, endLine)
-        allInput = self.master.get("1.0", "end").splitlines()
-        self.indentLevel = self.indentLevel[:len(allInput)]
-        pIndex = 0
-        for c in startLine:
-            if c == ".":
-                break
-            else:
-                pIndex += 1
-        
-        try:        
-            currentLevel = self.indentLevel[int(startLine[:pIndex])-1]
-        except IndexError:
-            currentLevel = 0
-        if currentLevel > 0:
-            try:
-                self.indentLevel[int(startLine[:pIndex])] = self.indentLevel[int(startLine[:pIndex])-1]
-            except IndexError:
-                if len(self.indentLevel) >= 1:
-                    self.indentLevel.append(self.indentLevel[int(startLine[:pIndex])-1])
-                else:
-                    self.indentLevel.append(0)
-             
+        curLevel = self.current_level(input)
+        print(curLevel)
+        bCursor = self.getCharBehindCursor()     
         self.master.insert(INSERT, "\n")
         
-        if re.search(r'.+\:', input):
-            try:
-                self.indentLevel.insert(int(startLine[:pIndex]),self.indentLevel[int(startLine[:pIndex])-1]+1)
-            except IndexError:
-                self.indentLevel.append(self.indentLevel[int(startLine[:pIndex])-1] + 1)
-            self.master.insert(INSERT, " " * (4 * self.indentLevel[int(startLine[:pIndex])]))
+        if bCursor == ":":
+            self.master.insert(INSERT, " " * (4* (curLevel + 1)))
             return "break"
         else:
-            try:
-                self.master.insert(INSERT, " " * (4 * self.indentLevel[int(startLine[:pIndex])-1]))
-                self.indentLevel.insert(int(startLine[:pIndex]),self.indentLevel[int(startLine[:pIndex])-1])
-            except IndexError:
-                self.indentLevel.append(self.indentLevel[int(startLine[:pIndex])-1])
+            self.master.insert(INSERT, " " * (4* curLevel))
             return "break"
-
+    
+    def getCharBehindCursor(self):
+        char = self.master.get("%s-1c" % INSERT, INSERT)
+        return char
+                    
+        
+    def current_level(self, input):
+        spaceCount = 0
+        for c in input:
+            if c == " ":
+                spaceCount += 1
+            else:
+                return int(spaceCount / 4)
+        return int(spaceCount / 4)
+    '''        
     def indent_open(self, textbox):
         input = textbox.get("1.0", "end").splitlines()
         for i in range(len(input)):
@@ -376,7 +359,7 @@ class Syntax(tk.Text):
                     break
             self.indentLevel.append(0)
         #print(self.indentLevel)
-
+    '''
     def color_coords(self, textbox, coords, color):
         if color == "blue":
             for i in range(len(coords)):
