@@ -23,6 +23,7 @@ class Veditor(tk.Frame):
         # text area
         self.text = tk.Text(master, bg="darkgrey", fg="white")
         self.text.grid(sticky="nsew")
+        
         # Menu Code
         self.menubar = tk.Menu(master)
         self.filemenu = tk.Menu(self.menubar, tearoff=0)
@@ -109,7 +110,6 @@ class Veditor(tk.Frame):
                 f = open(filename, 'r')
                 contents = f.read()
                 textbox.insert(INSERT, contents)
-                self.syntax.indent_open(textbox)
             except FileNotFoundError:
                 return
             
@@ -157,16 +157,18 @@ class Syntax(tk.Text):
         self.master = master
         self.registeredKw = keyword.kwlist
         self.registeredKw.extend(["False:", "True:", "else:", "try:", "return", "break"])
-        #self.indentLevel = [0]
 
         self.master.bind("<Return>", self.auto_indent)
         self.master.bind("<Tab>", self.tab)
         self.master.bind("<BackSpace>", self.back)
 
+    # Tab macro. Inserts 4 spaces
     def tab(self, arg):
         self.master.insert(INSERT, " " * 4)
         return "break"
     
+    # Backspace macro. removes 4 spaces if no text behind cursor
+    # removes 1 space if at beginning of line or text behind cursor
     def back(self, arg):
         pIndex = 0
         startLine = str(self.master.index("insert linestart"))
@@ -180,17 +182,26 @@ class Syntax(tk.Text):
                 pIndex += 1
 
         input = self.master.get(startLine, actualPos).strip()
+        
+        # Check if we're at the beginning of the line
         colZero = re.search(r'([0-9]*\.0) |([0-9][0-9]*\.0)', actualPos)
-
+        
+        # Handle highlighted text deletion
         if self.master.tag_ranges("sel"):
             self.master.delete(SEL_FIRST,SEL_LAST)
+        # elif there's no text behind the cursor, and we're at a position evenly divisible by four
+        # delete 4 spaces
         elif input == "" and not colZero and int(actualPos[pIndex:]) % 4 == 0:
             self.master.delete("insert -4 chars", "insert")
         else:
+        # Otherwise, delete 1 char
             self.master.delete("insert -1 chars", "insert")
         return "break"
+        
     # This function runs the syntax highlighting
     def dew_it(self, toggle):
+        # If syntax highlighting is on
+        # run color methods
         if toggle:
             self.find_kw(self.master)
             self.find_quotes(self.master)
@@ -209,6 +220,7 @@ class Syntax(tk.Text):
             self.master.tag_add("white", "1.0", "end")
             self.master.tag_config("white", foreground="white")
         return
+        
     # This function finds keywords for syntax highlighting.
     # NOTE: Re-do this with regex
     def find_kw(self, textbox):
@@ -277,6 +289,7 @@ class Syntax(tk.Text):
         input = textbox.get("1.0", "end")
         next = io.StringIO(input)
         while True:
+            # Read input line by line
             token = next.readline()
             if token == "":
                 break
@@ -315,26 +328,33 @@ class Syntax(tk.Text):
     
     # This function implements auto-indentation
     def auto_indent(self, arg):
+        # Get current line of text
         startLine = str(self.master.index("insert linestart"))
         endLine = str(self.master.index("insert lineend"))
         input = self.master.get(startLine, endLine)
+        
+        # Compute current indentdation level
         curLevel = self.current_level(input)
-        print(curLevel)
+        # Check character behind cursor
         bCursor = self.getCharBehindCursor()     
         self.master.insert(INSERT, "\n")
         
         if bCursor == ":":
+            # If the character behind the cursor is ":"
+            # Indent by previous indent + 1
             self.master.insert(INSERT, " " * (4* (curLevel + 1)))
             return "break"
         else:
+            # Otherwise, indent by current indent level
             self.master.insert(INSERT, " " * (4* curLevel))
             return "break"
     
+    # This function gets the character directly behind the cursor
     def getCharBehindCursor(self):
         char = self.master.get("%s-1c" % INSERT, INSERT)
         return char
                     
-        
+    # This function computes the current indentation level
     def current_level(self, input):
         spaceCount = 0
         for c in input:
@@ -343,23 +363,9 @@ class Syntax(tk.Text):
             else:
                 return int(spaceCount / 4)
         return int(spaceCount / 4)
-    '''        
-    def indent_open(self, textbox):
-        input = textbox.get("1.0", "end").splitlines()
-        for i in range(len(input)):
-            spaceCount = 0
-            for c in input[i]:
-                if c == " ":
-                    spaceCount += 1
-                else:
-                    try:
-                        self.indentLevel[i] = int(spaceCount / 4)
-                    except IndexError:
-                        self.indentLevel.append(int(spaceCount / 4))
-                    break
-            self.indentLevel.append(0)
-        #print(self.indentLevel)
-    '''
+
+    # This function applies the colors to the tagged text
+    # According to syntax
     def color_coords(self, textbox, coords, color):
         if color == "blue":
             for i in range(len(coords)):
